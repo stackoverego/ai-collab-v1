@@ -25,7 +25,7 @@ userSchema.methods.isVaildPassword=async function (password) {
        return await bcrypt.compare(password,this.password);
 }
 userSchema.methods.generateJWT=async function () {
-   return await jwt.sign({email:this.email},process.env.JWT_SECRET)
+   return await jwt.sign({email:this.email},process.env.JWT_SECRET,{expiresIn:"24h"})
 }
 
 const usermodel=mongoose.model("users",userSchema);
