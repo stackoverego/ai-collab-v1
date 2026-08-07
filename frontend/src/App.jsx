@@ -1,9 +1,12 @@
 import React from 'react'
 import Approutes from './routes/approutes'
+import UserContextProvider from './context/usercontext'
 
 const App = () => {
   return (
-   <Approutes/>
+    <UserContextProvider>
+      <Approutes/>
+    </UserContextProvider>
   )
 }
 
