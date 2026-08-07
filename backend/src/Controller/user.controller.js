@@ -13,6 +13,7 @@ export const createUserController = async function (req, res) {
   try {
     const user = await userservice.createUser(req.body);
     const token = await user.generateJWT();
+    delete user._doc.password;
     res.status(201).json({ user, token });
   } catch (error) {
     return res.status(400).send(error.message);
@@ -35,6 +36,7 @@ export const loginUserController = async function (req, res) {
       return res.status(401).json({ message: "invalid credentials" });
     }
     const token = await user.generateJWT();
+    delete user._doc.password;
     res.send({ user, token });
   } catch (error) {
     return res.status(400).send(error.message);
