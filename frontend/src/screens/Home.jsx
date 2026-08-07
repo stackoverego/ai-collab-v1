@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { UserContext } from "../context/usercontext";
 
 const Home = () => {
   const [ismodal, setismodal] = useState(false);
+  const {User}=useContext(UserContext);
 
   return (
     <main className="h-screen w-screen  flex">
@@ -54,7 +56,9 @@ const Home = () => {
       
       </section>
 
-      <section className="right h-screen flex grow bg-slate-300 "></section>
+      <section className="right h-screen flex grow bg-slate-300 ">
+      user:{JSON.stringify(User)};
+      </section>
     </main>
   );
 };
