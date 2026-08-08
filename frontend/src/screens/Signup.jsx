@@ -12,7 +12,7 @@ const Login = () => {
   const SubmitHandler = (e) => {
     e.preventDefault();
     axios
-      .post("/auth/register", { email, password })
+      .post("/auth/user/register", { email, password })
       .then((res) => {
         localStorage.setItem("token", res.data.token);
         setUser(res.data.user);

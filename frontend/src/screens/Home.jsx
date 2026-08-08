@@ -1,64 +1,67 @@
-import React, { useContext, useState } from "react";
-import { UserContext } from "../context/usercontext";
-
+import React, { useState } from "react";
+import axios from "../config/axios";
 const Home = () => {
-  const [ismodal, setismodal] = useState(false);
-  const {User}=useContext(UserContext);
+  const [IsModal, setModal] = useState(false);
+  const [projectname, setprojectname] = useState("");
+
+  const Handler=(e)=>{
+    e.preventDefault();
+    axios.post('/project/create',{name:projectname})
+    .then((res)=>{
+      console.log(res.data)
+      setModal(false);
+      setprojectname("");
+    })
+    .catch((err)=>console.log(err))
+  }
 
   return (
-    <main className="h-screen w-screen  flex">
-      <section className="left h-screen min-w-96 bg-slate-400 flex flex-col relative ">
-        <header className="bg-slate-500 w-full h-fit p-2 px-6 text-white flex justify-end">
-          <button className="cursor-pointer text-xl " onClick={()=>setismodal(true)} >
-            <i className="ri-group-fill"></i>
+    <main>
+      <div className="projects relative bg-emerald-300 h-screen w-screen">
+        <header className="px-4 py-2">
+          <button
+            className="px-2 py-1 text-lg bg-slate-300 flex gap-1 rounded-sm hover:bg-slate-400"
+            onClick={() => setModal(true)}
+          >
+            new project <i className="ri-run-line text-2xl"></i>
           </button>
         </header>
-        <div className="conversations flex grow flex-col p-1 gap-1 ">
-          <div className=" p-2 rounded-sm  bg-slate-200 border-0 min-w-60 mr-auto">
-            <small className="opacity-70">parth@gmail.com</small>
-            <p>hello</p>
-          </div>
-          <div className=" p-2 rounded-sm  bg-slate-200 border-0 min-w-60 ml-auto">
-            <small className="opacity-70">parth@gmail.com</small>
-            <p>hello</p>
-          </div>
-        </div>
-        <div className="inputfield w-full  flex">
-          <input
-            type="text"
-            className="bg-white p-2 border-0 rounded-sm font-semibold w-full outline-none "
-            placeholder="enter the message"
-          />
-          <button className="px-4 py-2 border-0 bg-sky-400 rounded-sm">
-            <i className="ri-send-ins-fill"></i>
-          </button>
-        </div>
+      </div>
 
-          <div className={`sidebar bg-slate-400 absolute  h-full w-full transition-all duration-400 ${ismodal?"translate-x-0":"-translate-x-full"}`} >
-            <header className="bg-slate-500 w-full h-fit p-2 px-6 transition-all text-white flex justify-end">
-              <button className="cursor-pointer text-xl " onClick={()=>setismodal(false)}>
-                <i className="ri-close-large-fill"></i>
+      {IsModal && (
+        <div className="fixed inset-0 flex items-center justify-center">
+          <div className="modal w-80 rounded-md bg-white p-4 shadow-lg">
+            <form className="flex flex-col gap-3" onSubmit={(e)=>Handler(e)}>
+              <label htmlFor="projectName" className="text-sm font-medium text-slate-700">
+                Project name
+              </label>
+              <input
+                id="projectName"
+                type="text"
+                onChange={(e)=>setprojectname(e.target.value)}
+                value={projectname}
+                className="rounded border border-slate-300 px-2 py-2 text-sm outline-none focus:border-emerald-500"
+                placeholder="Enter project name"
+              />
+              <div className="btns flex w-full gap-1">
+                <button
+                type="submit"
+                className="rounded w-full bg-emerald-500 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600"
+              >
+                Submit
               </button>
-            </header>
-            <div className="users flex flex-col gap-1 p-1">
-              <div className="user bg-red-500 px-2 py-3 flex gap-2 w-full rounded-sm  items-center" >
-                <div className="profile rounded-full h-10 w-10 bg-white">
-                </div>
-                <p>parth@patil.com</p>
+              <button
+                type="button"
+                className="rounded w-full bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-600"
+                onClick={()=>setModal(false)}
+              >
+                Close
+              </button>
               </div>
-              <div className="user bg-red-500 px-2 py-3 flex gap-2 w-full rounded-sm  items-center" >
-                <div className="profile rounded-full h-10 w-10 bg-white">
-                </div>
-                <p>parth@patil.com</p>
-              </div>
-            </div>
+            </form>
           </div>
-      
-      </section>
-
-      <section className="right h-screen flex grow bg-slate-300 ">
-      user:{JSON.stringify(User)};
-      </section>
+        </div>
+      )}
     </main>
   );
 };
