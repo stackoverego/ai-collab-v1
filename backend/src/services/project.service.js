@@ -1,5 +1,6 @@
 import e from "express";
 import projectModel from "../models/project.model.js";
+import mongoose from "mongoose";
 
 export const createProject=async ({name,userId}) => {
     console.log(name,userId)
@@ -31,6 +32,43 @@ export const getAllProjectsByUserId=async ({userid}) => {
     
 }
 
-export const addUsers=async ({project,users,userid}) => {
-    console.log(project,users,userid)
+export const addUsers=async ({projectId,users,userid}) => {
+    if(!projectId){
+        throw new Error("Invalid ProjectId")
+    }
+    if(!users){
+        throw new Error("Invalid users")
+    }
+    if(!userid){
+        throw new Error("Invalid userId")
+    }
+    if(!mongoose.Types.ObjectId.isValid(projectId)){
+        throw new Error("Invalid projectId")
+    }
+    if(!mongoose.Types.ObjectId.isValid(userid)){
+        throw new Error("Invalid userId")
+    }
+    if (!Array.isArray(users) ||users.some((userid) => !mongoose.Types.ObjectId.isValid(userid))) {
+        throw new Error("Invalid userId");
+    }
+    const project= await projectModel.findOne({
+        _id:projectId,
+        users:userid
+    })
+    if(!project){
+        throw new Error("User is not in Project")
+    }
+    const updatedProject=projectModel.findOneAndUpdate({
+        _id:projectId},
+        {
+            $addToSet:{
+                users:{
+                    $each:users
+                }
+            }
+        },{
+            $new:true
+        }
+    )
+    return updatedProject;
 }

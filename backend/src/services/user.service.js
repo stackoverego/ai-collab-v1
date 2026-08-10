@@ -11,3 +11,15 @@ export const createUser=async({email,password})=>{
         })
         return user;
 }
+
+export const getAllUsers=async({userid})=>{
+    if(!userid){
+        throw new Error("invalid user")
+    }
+    const allusers=await usermodel.find({
+        _id:{
+            $ne:userid
+        }
+    })
+    return allusers;
+}
