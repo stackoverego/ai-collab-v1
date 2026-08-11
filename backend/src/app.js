@@ -11,8 +11,5 @@ app.use(morgan('dev'));
 app.use(cookieParser());
 app.use('/auth/user',userroutes);
 app.use('/project',projectroutes);
-app.get('/',(req,res)=>{
-    res.send("hello world");
-})
 
 export default app;

@@ -11,10 +11,11 @@ router.post('/create',authUser,
 
 router.post('/all',authUser,projectController.getAllProjects);
 
-router.post('/add-user',authUser,
+router.put('/add-user',authUser,
     body('projectId').isString().withMessage("project id is required"),
     body('users').isArray({min:1}).withMessage('users must be an array of strings')
     .custom((users)=>users.every(user=> typeof user==="string")),
     projectController.addUsersToProject)
 
+router.post('/get-project/:projectid',authUser,projectController.getProjectDetails)
 export default router;
