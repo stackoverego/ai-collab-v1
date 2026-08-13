@@ -2,6 +2,7 @@ import React, { useContext, useState,useEffect } from "react";
 import { UserContext } from "../context/usercontext";
 import { useLocation } from "react-router-dom";
 import axios from '../config/axios'
+import { intializeSocket , sendMessage,ReceiveMessage} from "../config/socket";
 
 const Project = () => {
   const location = useLocation(); // to get the specific project
@@ -9,13 +10,21 @@ const Project = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // users add modal
   const [users, setUsers] = useState([]); //all users
   const [selectedUsers, setselectedUsers] = useState([]) //add users to exisiting project
-  const { User } = useContext(UserContext);
-  const [ProjectDetail, setProjectDetail] = useState(location.state.project);
+  const { User } = useContext(UserContext); //logged in user ka data
+  const [ProjectDetail, setProjectDetail] = useState(location.state.project); //current project 
+  const [msg, setmsg] = useState(""); // current msg jo user send karega
   // console.log(location.state)
+
   useEffect(() => {
+    intializeSocket(ProjectDetail._id)
     axios.get('auth/user/all').then((res)=>
       setUsers(res.data.users))
     .catch((err)=>console.log(err))
+
+    ReceiveMessage('project-message',data=>{
+      console.log(data)
+    })
+
 
     axios.post(`/project/get-project/${location.state.project._id}`).then((res)=>{
       setProjectDetail(res.data.project);
@@ -49,6 +58,14 @@ const Project = () => {
       console.log(error)
     })
   }
+  const send=()=>{
+    console.log('clicked')
+    sendMessage('project-message',{
+      msg,
+      sender: User
+    })
+    setmsg(" ")
+  }
 
   return (
     <main className="h-screen w-screen  flex">
@@ -74,11 +91,13 @@ const Project = () => {
         </div>
         <div className="inputfield w-full  flex">
           <input
+            value={msg}
+            onChange={(e)=>setmsg(e.target.value)}
             type="text"
             className="bg-white p-2 border-0 rounded-sm font-semibold w-full outline-none "
             placeholder="enter the message"
           />
-          <button className="px-4 py-2 border-0 bg-sky-400 rounded-sm">
+          <button className="px-4 py-2 border-0 bg-sky-400 rounded-sm" onClick={send}>
             <i className="ri-send-ins-fill"></i>
           </button>
         </div>
@@ -92,8 +111,8 @@ const Project = () => {
             </button>
           </header>
            <div className="flex flex-col gap-1 p-1" >
-             {ProjectDetail.users && (ProjectDetail.users).map((user)=> (
-               <div className="user bg-slate-500 px-2 py-3 flex gap-2 w-full rounded-sm font-bold  items-center">
+             {ProjectDetail.users && (ProjectDetail.users).map((user,idx)=> (
+               <div key={idx} className="user bg-slate-500 px-2 py-3 flex gap-2 w-full rounded-sm font-bold  items-center">
               <div className="profile rounded-full h-10 w-10 bg-white"></div>
               <p>{user.email}</p>
             </div>
