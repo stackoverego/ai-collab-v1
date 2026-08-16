@@ -1,38 +1,19 @@
-import React, { useContext, useState,useEffect } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { UserContext } from "../context/usercontext";
 import { useLocation } from "react-router-dom";
-import axios from '../config/axios'
-import { intializeSocket , sendMessage,ReceiveMessage} from "../config/socket";
+import axios from "../config/axios";
+import { intializeSocket, sendMessage, ReceiveMessage } from "../config/socket";
 
 const Project = () => {
   const location = useLocation(); // to get the specific project
   const [ismodal, setismodal] = useState(false); //project modal
   const [isModalOpen, setIsModalOpen] = useState(false); // users add modal
   const [users, setUsers] = useState([]); //all users
-  const [selectedUsers, setselectedUsers] = useState([]) //add users to exisiting project
+  const [selectedUsers, setselectedUsers] = useState([]); //add users to exisiting project
   const { User } = useContext(UserContext); //logged in user ka data
-  const [ProjectDetail, setProjectDetail] = useState(location.state.project); //current project 
+  const [ProjectDetail, setProjectDetail] = useState(location.state.project); //current project
   const [msg, setmsg] = useState(""); // current msg jo user send karega
   // console.log(location.state)
-
-  useEffect(() => {
-    intializeSocket(ProjectDetail._id)
-    axios.get('auth/user/all').then((res)=>
-      setUsers(res.data.users))
-    .catch((err)=>console.log(err))
-
-    ReceiveMessage('project-message',data=>{
-      console.log(data)
-    })
-
-
-    axios.post(`/project/get-project/${location.state.project._id}`).then((res)=>{
-      setProjectDetail(res.data.project);
-    })
-    .catch((error)=>{
-      console.log(error)
-    })
-  }, [])  
 
   const handleClick = (id) => {
     setselectedUsers((prevselectedusers) => {
@@ -43,29 +24,83 @@ const Project = () => {
       } else {
         newusers.add(id);
       }
-      
+
       return newusers;
     });
   };
-  
-  const addCollaborators=()=>{
-    axios.put('/project/add-user',{projectId:location.state.project._id,users:Array.from(selectedUsers)})
-    .then((res)=>{
-      console.log(res.data)
-      setIsModalOpen(false);
-    })
-    .catch((error)=>{
-      console.log(error)
-    })
-  }
-  const send=()=>{
-    console.log('clicked')
-    sendMessage('project-message',{
+
+  const addCollaborators = () => {
+    axios
+      .put("/project/add-user", { projectId: location.state.project._id, users: Array.from(selectedUsers) })
+      .then((res) => {
+        console.log(res.data);
+        setIsModalOpen(false);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+  const send = () => {
+    if(!msg.trim()){ // agar msg empty he to jayega hi nhi
+      return;
+    }
+    sendMessage("project-message", {
       msg,
-      sender: User
-    })
-    setmsg(" ")
+      sender: User,
+    });
+    setmsg(" ");
+    addOutgoingMessage(msg)
+  };
+
+  const addIncomingMessage = (messageObject) => {
+    const messageBox = document.querySelector(".conversations");
+    const incoming = document.createElement("div");
+    incoming.classList.add("incoming", "p-2", "rounded-sm", "bg-slate-200", "border-0", "w-60", "mr-auto");
+    incoming.innerHTML = `
+    <small class="opacity-70">${messageObject.sender.email}</small>
+    <p class="break-all">${messageObject.msg}</p>`;
+    messageBox.appendChild(incoming); 
+    ScrollToBottom()
+
+  };
+
+  const addOutgoingMessage = (msg) => {
+    const messageBox = document.querySelector(".conversations");
+    const incoming = document.createElement("div");
+    incoming.classList.add("outcoming", "p-2", "rounded-sm", "bg-slate-200", "border-0", "w-60", "ml-auto");
+    incoming.innerHTML = `
+    <small class="opacity-70">${User.email}</small>
+    <p class="break-all">${msg}</p>
+`;
+    messageBox.appendChild(incoming);
+    ScrollToBottom()
+  };
+
+  const ScrollToBottom= ()=>{
+    const div= document.querySelector('.conversations');
+    div.scrollTop=div.scrollHeight
   }
+
+  useEffect(() => {
+    intializeSocket(ProjectDetail._id);
+    axios
+      .get("auth/user/all")
+      .then((res) => setUsers(res.data.users))
+      .catch((err) => console.log(err));
+
+    ReceiveMessage("project-message", (data) => {
+      addIncomingMessage(data);
+    });
+
+    axios
+      .post(`/project/get-project/${location.state.project._id}`)
+      .then((res) => {
+        setProjectDetail(res.data.project);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
 
   return (
     <main className="h-screen w-screen  flex">
@@ -79,20 +114,13 @@ const Project = () => {
             <small>Add Collaborators</small>
           </button>
         </header>
-        <div className="conversations flex grow flex-col p-1 gap-1 ">
-          <div className=" p-2 rounded-sm  bg-slate-200 border-0 min-w-60 mr-auto">
-            <small className="opacity-70">parth@gmail.com</small>
-            <p>hello</p>
-          </div>
-          <div className=" p-2 rounded-sm  bg-slate-200 border-0 min-w-60 ml-auto">
-            <small className="opacity-70">parth@gmail.com</small>
-            <p>hello</p>
-          </div>
+        <div className="conversations flex grow flex-col p-1 gap-1 max-h-full bg-red-200 overflow-auto">
+         
         </div>
         <div className="inputfield w-full  flex">
           <input
             value={msg}
-            onChange={(e)=>setmsg(e.target.value)}
+            onChange={(e) => setmsg(e.target.value)}
             type="text"
             className="bg-white p-2 border-0 rounded-sm font-semibold w-full outline-none "
             placeholder="enter the message"
@@ -110,45 +138,52 @@ const Project = () => {
               <i className="ri-close-large-fill"></i>
             </button>
           </header>
-           <div className="flex flex-col gap-1 p-1" >
-             {ProjectDetail.users && (ProjectDetail.users).map((user,idx)=> (
-               <div key={idx} className="user bg-slate-500 px-2 py-3 flex gap-2 w-full rounded-sm font-bold  items-center">
-              <div className="profile rounded-full h-10 w-10 bg-white"></div>
-              <p>{user.email}</p>
-            </div>
-             ))}
-            
+          <div className="flex flex-col gap-1 p-1">
+            {ProjectDetail.users &&
+              ProjectDetail.users.map((user, idx) => (
+                <div
+                  key={idx}
+                  className="user bg-slate-500 px-2 py-3 flex gap-2 w-full rounded-sm font-bold  items-center"
+                >
+                  <div className="profile rounded-full h-10 w-10 bg-white"></div>
+                  <p>{user.email}</p>
+                </div>
+              ))}
           </div>
         </div>
 
-        
-            {isModalOpen && (
-                <div className="fixed inset-0  flex items-center justify-center">
-                    <div className="bg-white p-4 rounded-md w-96 max-w-full relative">
-                        <header className='flex justify-between items-center mb-4'>
-                            <h2 className='text-xl font-semibold'>Select User</h2>
-                            <button onClick={() => setIsModalOpen(false)} className='p-2'>
-                                <i className="ri-close-fill"></i>
-                            </button>
-                        </header>
-                        <div className="users-list flex flex-col gap-2 mb-16 max-h-96 overflow-auto">
-                            {users.map(user => (
-                                <div key={user._id} className={`user cursor-pointer hover:bg-slate-200 ${Array.from(selectedUsers).indexOf(user._id) != -1 ? 'bg-slate-200' : ""} p-2 flex gap-2 items-center`} onClick={() => handleClick(user._id)}>
-                                    <div className='aspect-square relative rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600'>
-                                        <i className="ri-user-fill absolute"></i>
-                                    </div>
-                                    <h1 className='font-semibold text-lg'>{user.email}</h1>
-                                </div>
-                            ))}
-                        </div>
-                        <button
-                            onClick={addCollaborators}
-                            className='absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-blue-600 text-white rounded-md'>
-                            Add Collaborators
-                        </button>
+        {isModalOpen && (
+          <div className="fixed inset-0  flex items-center justify-center">
+            <div className="bg-white p-4 rounded-md w-96 max-w-full relative">
+              <header className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Select User</h2>
+                <button onClick={() => setIsModalOpen(false)} className="p-2">
+                  <i className="ri-close-fill"></i>
+                </button>
+              </header>
+              <div className="users-list flex flex-col gap-2 mb-16 max-h-96 overflow-auto">
+                {users.map((user) => (
+                  <div
+                    key={user._id}
+                    className={`user cursor-pointer hover:bg-slate-200 ${Array.from(selectedUsers).indexOf(user._id) != -1 ? "bg-slate-200" : ""} p-2 flex gap-2 items-center`}
+                    onClick={() => handleClick(user._id)}
+                  >
+                    <div className="aspect-square relative rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600">
+                      <i className="ri-user-fill absolute"></i>
                     </div>
-                </div>
-            )}
+                    <h1 className="font-semibold text-lg">{user.email}</h1>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={addCollaborators}
+                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-blue-600 text-white rounded-md"
+              >
+                Add Collaborators
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="right h-screen flex grow bg-slate-300 ">user:{JSON.stringify(User)};</section>

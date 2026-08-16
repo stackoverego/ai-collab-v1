@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+.conversations::-webkit-scrollbar{
+    display: none;
+}
+
+.conversations{
+    scroll-behavior: smooth;
+}

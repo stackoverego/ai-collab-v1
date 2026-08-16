@@ -6,7 +6,7 @@ import {Server} from 'socket.io'
 import jwt from 'jsonwebtoken';
 import mongoose, { mongo } from 'mongoose';
 import projectModel from './src/models/project.model.js';
-
+import { askai } from './src/services/ai.service.js';
 const server=http.createServer(app);
 
 
@@ -43,19 +43,29 @@ io.use(async(socket,next)=>{
     }
 })
 
-io.on('connection', socket => {
+io.on('connection',(socket) => {
     const id=socket.project._id.toString();
     socket.join(id);
-    console.log('room joined')
-    console.log('a user connected')
 
-    socket.on('project-message',data=>{
-        console.log(data)
+    socket.on('project-message',async data=>{
+        const message=data.msg
+        const aiPresent=message.includes('@ai')
         socket.broadcast.to(id).emit('project-message',data);
+        if(aiPresent){
+            const prompt=message.replace('@ai', " ").trim();
+            const result=await askai(prompt)
+            io.to(id).emit('project-message',{
+                msg:result,
+                sender:{
+                    id:"AI",
+                    email:"AI"
+                }
+            })
+        }
     })
 
     socket.on('event', data => { /* … */ });
-    socket.on('disconnect', () => {  });
+    socket.on('disconnect', () => {socket.leave(id)  });
 });
 
 
