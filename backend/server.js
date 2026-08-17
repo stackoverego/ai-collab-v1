@@ -57,7 +57,7 @@ io.on('connection',(socket) => {
             io.to(id).emit('project-message',{
                 msg:result,
                 sender:{
-                    id:"AI",
+                    _id:"AI",
                     email:"AI"
                 }
             })

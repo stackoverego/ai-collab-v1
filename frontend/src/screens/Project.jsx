@@ -4,6 +4,8 @@ import { useLocation } from "react-router-dom";
 import axios from "../config/axios";
 import { intializeSocket, sendMessage, ReceiveMessage } from "../config/socket";
 
+import Markdown from "markdown-to-jsx";
+
 const Project = () => {
   const location = useLocation(); // to get the specific project
   const [ismodal, setismodal] = useState(false); //project modal
@@ -13,7 +15,8 @@ const Project = () => {
   const { User } = useContext(UserContext); //logged in user ka data
   const [ProjectDetail, setProjectDetail] = useState(location.state.project); //current project
   const [msg, setmsg] = useState(""); // current msg jo user send karega
-  // console.log(location.state)
+  const [messages, setmessages] = useState([]);
+  // console.log(User)
 
   const handleClick = (id) => {
     setselectedUsers((prevselectedusers) => {
@@ -41,7 +44,8 @@ const Project = () => {
       });
   };
   const send = () => {
-    if(!msg.trim()){ // agar msg empty he to jayega hi nhi
+    if (!msg.trim()) {
+      // agar msg empty he to jayega hi nhi
       return;
     }
     sendMessage("project-message", {
@@ -49,37 +53,15 @@ const Project = () => {
       sender: User,
     });
     setmsg(" ");
-    addOutgoingMessage(msg)
+    setmessages((history) => [...history, { msg, sender: User }]);
+  
   };
 
-  const addIncomingMessage = (messageObject) => {
-    const messageBox = document.querySelector(".conversations");
-    const incoming = document.createElement("div");
-    incoming.classList.add("incoming", "p-2", "rounded-sm", "bg-slate-200", "border-0", "w-60", "mr-auto");
-    incoming.innerHTML = `
-    <small class="opacity-70">${messageObject.sender.email}</small>
-    <p class="break-all">${messageObject.msg}</p>`;
-    messageBox.appendChild(incoming); 
-    ScrollToBottom()
 
+  const ScrollToBottom = () => {
+    const div = document.querySelector(".conversations");
+    div.scrollTop = div.scrollHeight;
   };
-
-  const addOutgoingMessage = (msg) => {
-    const messageBox = document.querySelector(".conversations");
-    const incoming = document.createElement("div");
-    incoming.classList.add("outcoming", "p-2", "rounded-sm", "bg-slate-200", "border-0", "w-60", "ml-auto");
-    incoming.innerHTML = `
-    <small class="opacity-70">${User.email}</small>
-    <p class="break-all">${msg}</p>
-`;
-    messageBox.appendChild(incoming);
-    ScrollToBottom()
-  };
-
-  const ScrollToBottom= ()=>{
-    const div= document.querySelector('.conversations');
-    div.scrollTop=div.scrollHeight
-  }
 
   useEffect(() => {
     intializeSocket(ProjectDetail._id);
@@ -89,7 +71,7 @@ const Project = () => {
       .catch((err) => console.log(err));
 
     ReceiveMessage("project-message", (data) => {
-      addIncomingMessage(data);
+      setmessages((history) => [...history, data]);
     });
 
     axios
@@ -104,7 +86,7 @@ const Project = () => {
 
   return (
     <main className="h-screen w-screen  flex">
-      <section className="left h-screen min-w-96 bg-slate-400 flex flex-col relative ">
+      <section className="left h-screen min-w-1/4 bg-slate-400 flex flex-col relative ">
         <header className="bg-slate-500 w-full h-fit p-2 px-6 text-white flex justify-between">
           <button className="cursor-pointer text-xl " onClick={() => setismodal(true)}>
             <i className="ri-group-fill"></i>
@@ -115,7 +97,23 @@ const Project = () => {
           </button>
         </header>
         <div className="conversations flex grow flex-col p-1 gap-1 max-h-full bg-red-200 overflow-auto">
-         
+          {messages.map((message, idx) => (
+            <div key={idx} className={`outcoming p-2 rounded-sm  
+    ${message.sender._id == "AI" ? "w-96 bg-black text-white" : "w-72 bg-white text-black"}
+    ${message.sender._id === User._id ? "ml-auto" : "mr-auto"}
+  `}
+            >
+              <small className="opacity-70">{message.sender.email}</small>
+                  {console.log(message)}
+              {message.sender._id === "AI" ? (
+                <div className="overflow-auto">
+                  <Markdown>{message.msg}</Markdown>
+                </div>
+              ) : (
+                <p className="break-all">{message.msg}</p>
+              )}
+            </div>
+          ))}
         </div>
         <div className="inputfield w-full  flex">
           <input
